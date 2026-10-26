@@ -134,6 +134,12 @@ and `/healthz` is provided for health checks.
 | `ALLOWED_ORIGINS` | Comma-separated CORS/WS origin allowlist (Mode B) | any origin |
 | `SERVE_STATIC` | `false` = backend-only (Mode B) | `true` |
 
+Client HTML/JS/CSS is served with `Cache-Control: no-cache` (+ETag, so the
+revalidation is a cheap 304) while fonts/GSAP stay long-cached: phones keep
+the page open for a whole party, and they must pick up a new `dice.js` /
+`mobile.js` on their next load instead of running yesterday's copy. A phone
+that was already on a stale page just needs one refresh after a deploy.
+
 ---
 
 ## Best free hosting options *(checked 26 Oct 2026 — free tiers change often; re-verify before you rely on them)*
@@ -221,7 +227,8 @@ public/
   vendor/          GSAP 3 core (bundled — no CDN)
   fonts/           Vazirmatn woff2 subsets (bundled — no Google Fonts)
 scripts/           copy-vendor.js (postinstall) · build-static.js (Mode B)
-test/              board property tests (2,000 boards) + rules/room tests
+test/              board property tests (2,000 boards) · rules/room state
+                   machine · shared dice widget · mobile client (fake DOM)
 docs/ARCHITECTURE.md   decision log, assumptions A1–A10, limitations
 ```
 

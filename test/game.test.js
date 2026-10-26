@@ -116,3 +116,43 @@ test('room: reconnect with token restores the seat before removal', () => {
   assert.strictEqual(bad.error, 'error.reconnectFailed');
   room.destroy();
 });
+
+test('room: every snapshot carries the authoritative face for phones that missed the roll', () => {
+  const { room } = makeRoom([]);
+  room.attachHost(fakeWs());
+  room.addPlayer(fakeWs(), { name: 'A', colorId: 0 });
+  const bWs = fakeWs();
+  room.addPlayer(bWs, { name: 'B', colorId: 1 });
+  room.startGame();
+  room.rng = () => 0.99; // rollDie() → 6
+
+  const roller = room.currentPlayerId();
+  assert.deepStrictEqual(room.handleRoll(roller), {});
+
+  const snap = room.snapshot();
+  assert.ok(snap.lastRoll, 'snapshot carries the last roll');
+  assert.strictEqual(snap.lastRoll.roll, 6);
+  assert.strictEqual(snap.lastRoll.playerId, roller);
+  const rolled = bWs.sent.filter((m) => m.type === SL.S2C.DICE_ROLLED).pop();
+  assert.strictEqual(rolled.rollId, snap.lastRoll.id, 'dice:rolled and room:state agree');
+
+  // A phone that reconnects mid-animation is handed the face it missed.
+  const rollerRec = [...room.players.values()].find((p) => p.id === roller);
+  const backWs = fakeWs();
+  assert.ok(room.reconnectPlayer(backWs, rollerRec.id, rollerRec.token).player);
+  const stateMsg = backWs.sent.filter((m) => m.type === SL.S2C.STATE).pop();
+  assert.deepStrictEqual(stateMsg.state.lastRoll, snap.lastRoll);
+
+  // A new game clears the face, but ids stay monotonic so an old snapshot
+  // can never overwrite a newer roll on any client.
+  room.endGame(null, 'elimination');
+  room.rematch();
+  assert.strictEqual(room.snapshot().lastRoll, null);
+  assert.deepStrictEqual(room.startGame(), {});
+  assert.strictEqual(room.snapshot().lastRoll, null, 'nothing rolled yet in the new game');
+  room.handleRoll(room.currentPlayerId());
+  const next = room.snapshot().lastRoll;
+  assert.ok(next.id > snap.lastRoll.id, 'roll ids are monotonic across games');
+  assert.strictEqual(next.roll, 6);
+  room.destroy();
+});

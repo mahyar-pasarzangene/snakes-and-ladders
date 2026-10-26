@@ -59,8 +59,12 @@
     S2C: {
       ROOM_CREATED: 'room:created',   // → TV: {roomCode, joinUrl, qrSvg, state}
       STATE: 'room:state',            // → all: full room snapshot (players, board…)
+                                      //   includes lastRoll {id, playerId, roll} so a
+                                      //   client that missed dice:rolled (asleep phone,
+                                      //   reconnect) still shows the authoritative face
       PLAYER_JOINED: 'player:joined', // → phone: {playerId, token, state}
-      DICE_ROLLED: 'dice:rolled',     // → all: full move plan (see server/game.js)
+      DICE_ROLLED: 'dice:rolled',     // → all: {rollId, playerId, plan} full move plan
+                                      //   (see server/game.js); rollId is monotonic
       TURN: 'turn:changed',           // → all: {turnPlayerId, endsAt, serverNow}
       ANNOUNCE: 'announce',           // → all: {key, params} — i18n key, NOT text (§4.1)
       LANG: 'room:lang',              // → all: {lang} room language changed

@@ -5,6 +5,14 @@
  * faces, transform-only GSAP motion) settling on the same face at the
  * same budget (SL.CONFIG.DICE_ANIM_MS). Falls back to a plain timed
  * face-swap if GSAP somehow failed to load (spec §2.2 fallback rule).
+ *
+ * `dice:rolled` is a one-shot broadcast, so a client that was asleep,
+ * reloaded mid-roll or briefly offline never sees it — a phone almost
+ * always does at some point (screen lock, backgrounded tab, Wi-Fi blip),
+ * which left that player's die showing a stale face while the TV showed
+ * the real one. Every `room:state` snapshot therefore also carries
+ * `lastRoll`, and `syncSnapshot()` lets any client adopt the face it
+ * missed. See also `_lastRollId` below.
  */
 (function () {
   'use strict';
@@ -30,6 +38,10 @@
     }
     this._iv = null;
     this._rollGeneration = 0;
+    // Highest authoritative roll id this die already shows (or is
+    // animating). Server ids are monotonic per room, so a snapshot can
+    // never drag the die back to an older face.
+    this._lastRollId = 0;
     this.setFace(6);
   }
 
@@ -52,12 +64,17 @@
   };
 
   /** Animate a tumble ending on `result`. Calls done() when settled.
+   *  `rollId` (optional) is the server's monotonic id for this roll; it
+   *  marks the face as current so a `room:state` snapshot for the same
+   *  roll cannot cut the tumble short.
+   *
    *  The rocking tween runs until the face settles, then is killed and
    *  the die is explicitly returned to rotation:0 / scale:1 — an earlier
    *  yoyo tween used to end on its FROM values, leaving every settled
    *  die permanently tilted at -14°. */
-  Dice.prototype.rollTo = function (result, durationMs, done) {
+  Dice.prototype.rollTo = function (result, durationMs, done, rollId) {
     if (!isValidFace(result)) return false;
+    if (typeof rollId === 'number' && rollId > this._lastRollId) this._lastRollId = rollId;
     var self = this;
     clearInterval(this._iv);
     this.stopRock();
@@ -97,6 +114,30 @@
 
   Dice.prototype.stopRock = function () {
     if (this._rock) { this._rock.kill(); this._rock = null; }
+  };
+
+  /**
+   * Adopt the authoritative face carried by a `room:state` snapshot's
+   * `lastRoll` ({id, playerId, roll}). This is what keeps every player's
+   * phone on the same face as the TV: the tumble rides a one-shot
+   * `dice:rolled` broadcast, so any client that missed it (screen asleep,
+   * tab backgrounded, reload mid-roll, Wi-Fi blip → reconnect) used to
+   * keep the previous face — or the constructor's 6 — indefinitely.
+   *
+   * Deliberately NOT animated: the roll already happened, so the snapshot
+   * only corrects a face the client missed. Returns true when it changed
+   * the die. A no-op for a missing/invalid roll, or for a roll this die
+   * already shows (a snapshot normally arrives right after `dice:rolled`,
+   * and must not disturb the running tumble).
+   */
+  Dice.prototype.syncSnapshot = function (lastRoll) {
+    if (!lastRoll || !isValidFace(lastRoll.roll)) return false;
+    var id = typeof lastRoll.id === 'number' ? lastRoll.id : null;
+    if (id !== null && id <= this._lastRollId) return false;
+    this.stop(); // a newer authoritative face wins over an older tumble
+    this.setFace(lastRoll.roll);
+    if (id !== null) this._lastRollId = id;
+    return true;
   };
 
   Dice.prototype.stop = function () {

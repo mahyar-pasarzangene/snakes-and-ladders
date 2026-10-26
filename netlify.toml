@@ -10,3 +10,27 @@
   from = "/join/*"
   to = "/join/index.html"
   status = 200
+
+# Client code and markup must revalidate on every load. Players keep the
+# phone page open for the whole party, so a long max-age would keep an
+# old dice.js/mobile.js running on their phones after a deploy while the
+# (manually refreshed) TV already runs the new one.
+[[headers]]
+  for = "/assets/*"
+  [headers.values]
+    Cache-Control = "no-cache"
+
+[[headers]]
+  for = "/m/*"
+  [headers.values]
+    Cache-Control = "no-cache"
+
+[[headers]]
+  for = "/join/*"
+  [headers.values]
+    Cache-Control = "no-cache"
+
+[[headers]]
+  for = "/*.html"
+  [headers.values]
+    Cache-Control = "no-cache"
