@@ -11,7 +11,8 @@
  * asleep, backgrounded, reloaded mid-roll or briefly offline (Wi-Fi blip →
  * reconnect) used to keep the previous face — or the constructor default 6
  * — while the TV showed the real result. Every snapshot now carries
- * `lastRoll` and the phone adopts it.
+ * `lastRoll` and the phone adopts it. The assertions also count the pips
+ * actually rendered in the players' view, not only `data-face`.
  */
 const { test } = require('node:test');
 const assert = require('node:assert/strict');
@@ -180,6 +181,12 @@ function joinedPhone(s) {
   return phone;
 }
 
+/** Pips actually rendered on the players' view (not just data-face). */
+function visiblePips(phone) {
+  return phone.el('diceEl').children
+    .filter((pip) => pip.className.split(' ').includes('on')).length;
+}
+
 test('a phone that missed the roll shows the authoritative face from the snapshot', () => {
   // Reconnect mid-animation: no `dice:rolled` on this socket, only state.
   const phone = joinedPhone(state({
@@ -191,6 +198,7 @@ test('a phone that missed the roll shows the authoritative face from the snapsho
   assert.equal(
     phone.el('diceEl').className.split(' ').includes('face-3'), true,
     'die class matches the face');
+  assert.equal(visiblePips(phone), 3, 'the player view renders three pips');
   const line = phone.el('statusLine').textContent;
   assert.match(line, /^play\.rolledInfo:/, 'explains whose roll the TV is showing');
   assert.match(line, /"roll":3/, 'and the value');
@@ -213,6 +221,7 @@ test('the snapshot that follows dice:rolled does not disturb the phone tumble', 
   assert.ok(phone.timers.size > 0, 'tumble still running after the snapshot');
   phone.ticks(11);
   assert.equal(phone.el('diceEl').getAttribute('data-face'), '5');
+  assert.equal(visiblePips(phone), 5, 'the settled player die shows five pips');
 });
 
 test('a roll this phone missed mid-tumble wins over the older animation', () => {
@@ -232,8 +241,10 @@ test('a roll this phone missed mid-tumble wins over the older animation', () => 
   }) });
 
   assert.equal(phone.el('diceEl').getAttribute('data-face'), '4');
+  assert.equal(visiblePips(phone), 4, 'the newer snapshot renders four pips');
   phone.ticks(12); // any queued ticks from the stale tumble
   assert.equal(phone.el('diceEl').getAttribute('data-face'), '4');
+  assert.equal(visiblePips(phone), 4, 'a stale timer cannot change the pips');
 });
 
 test('a late arrival on the join form still sees the current face', () => {
@@ -241,6 +252,8 @@ test('a late arrival on the join form still sees the current face', () => {
   // no status line is fabricated.
   const phone = joinedPhone(state({ phase: 'LOBBY', turnPlayerId: null }));
   assert.equal(phone.el('diceEl').getAttribute('data-face'), '6');
+  assert.equal(visiblePips(phone), 6);
   phone.sock.receive({ type: 'room:state', state: state({ lastRoll: null }) });
   assert.equal(phone.el('diceEl').getAttribute('data-face'), '6');
+  assert.equal(visiblePips(phone), 6);
 });

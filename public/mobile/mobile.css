@@ -85,8 +85,11 @@ body {
 .timer-fill.urgent { background: #ef4444; }
 
 .dice-stage { display: flex; justify-content: center; padding: 14px 0 20px; }
-/* Compound selector: dice.js puts .dice on #diceEl itself (the old
-   descendant selector never matched, leaving the 84px fallback). */
+/* Players' view mirrors the TV's square, non-shrinking die. Compound
+   selector: dice.js puts .dice on #diceEl itself (the old descendant
+   selector never matched, leaving the 84px fallback). The shared widget
+   sizes its 3×3 pip grid from this --dice-size, so phone and TV show the
+   same full-size pips regardless of the flex stage's width. */
 #diceEl.dice { --dice-size: 104px; }
 
 .roll-btn {
