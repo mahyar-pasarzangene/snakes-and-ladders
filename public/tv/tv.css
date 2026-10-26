@@ -141,7 +141,12 @@ button[data-focus]:focus, button:focus-visible {
 .turn-avatar { font-size: 2.2vw; }
 .turn-line h2 { margin: 0; }
 .dice-row { display: flex; align-items: center; gap: 1.2vw; justify-content: center; margin-top: 1.2vh; }
-#diceEl .dice { --dice-size: 5.6vw; }
+/* dice.js adds .dice to #diceEl itself, so this must be a compound
+   selector — `#diceEl .dice` (descendant) never matched and the die
+   always fell back to the small 84px default. The px line is the
+   fallback for old engines without max(); the max() line keeps the
+   die couch-readable on TVs while flooring it on narrow windows. */
+#diceEl.dice { --dice-size: 84px; --dice-size: max(72px, 5.6vw); }
 .timer-box { flex: 1; max-width: 11vw; }
 .timer-num { font-size: 2vw; font-weight: 900; text-align: center; font-variant-numeric: tabular-nums; }
 .timer-bar { height: 0.7vh; background: rgba(255,255,255,0.15); border-radius: 999px; overflow: hidden; margin-top: 0.5vh; }

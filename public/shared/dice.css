@@ -3,6 +3,10 @@
   --dice-size: 84px;
   width: var(--dice-size);
   height: var(--dice-size);
+  /* The die sits in flex rows (TV turn card, phone stage): without this
+     the default flex-shrink:1 can squeeze it narrower than --dice-size
+     while the height stays put, distorting the pip grid. */
+  flex: none;
   background: linear-gradient(145deg, #ffffff, #e8e4f5);
   border-radius: 18%;
   display: grid;
