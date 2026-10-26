@@ -29,17 +29,26 @@
       this.pips.push(p);
     }
     this._iv = null;
+    this._rollGeneration = 0;
     this.setFace(6);
   }
 
+  function isValidFace(n) {
+    return Number.isInteger(n) && Object.prototype.hasOwnProperty.call(PIPS, n);
+  }
+
   Dice.prototype.setFace = function (n) {
+    // Never render a blank/partial die for a malformed or stale message.
+    // The authoritative server always sends an integer from 1 through 6.
+    if (!isValidFace(n)) return false;
     this.face = n;
     this.el.className = 'dice face-' + n;
     this.el.setAttribute('data-face', n);
-    var on = PIPS[n] || [];
+    var on = PIPS[n];
     for (var i = 0; i < 9; i++) {
       this.pips[i].className = 'pip' + (on.indexOf(i) !== -1 ? ' on' : '');
     }
+    return true;
   };
 
   /** Animate a tumble ending on `result`. Calls done() when settled.
@@ -48,16 +57,25 @@
    *  yoyo tween used to end on its FROM values, leaving every settled
    *  die permanently tilted at -14°. */
   Dice.prototype.rollTo = function (result, durationMs, done) {
+    if (!isValidFace(result)) return false;
     var self = this;
     clearInterval(this._iv);
     this.stopRock();
-    var swaps = Math.max(4, Math.floor(durationMs / 90));
+    // clearInterval prevents future ticks, but a tick already queued by the
+    // browser can still race a newly received roll. Generation-check each
+    // callback so an older roll can never overwrite the current face.
+    var generation = ++this._rollGeneration;
+    var duration = Number.isFinite(durationMs) ? Math.max(0, durationMs) : 0;
+    var swaps = Math.max(4, Math.floor(duration / 90));
     var count = 0;
     this._iv = setInterval(function () {
+      if (generation !== self._rollGeneration) return;
       count++;
       self.setFace(1 + Math.floor(Math.random() * 6));
       if (count >= swaps) {
         clearInterval(self._iv);
+        self._iv = null;
+        ++self._rollGeneration; // invalidate any duplicate/queued final tick
         self.setFace(result);
         self.stopRock();
         if (window.gsap) {
@@ -74,6 +92,7 @@
         { rotation: -12, scale: 0.92 },
         { rotation: 10, scale: 1.08, duration: 0.18, yoyo: true, repeat: -1, ease: 'sine.inOut' });
     }
+    return true;
   };
 
   Dice.prototype.stopRock = function () {
@@ -81,7 +100,9 @@
   };
 
   Dice.prototype.stop = function () {
+    ++this._rollGeneration;
     clearInterval(this._iv);
+    this._iv = null;
     this.stopRock();
     if (window.gsap) {
       gsap.killTweensOf(this.el);
