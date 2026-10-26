@@ -1,0 +1,27 @@
+{
+  "name": "snakes-and-ladders-party",
+  "version": "1.0.0",
+  "description": "Multiplayer Snakes & Ladders TV party game — TV display + phone controllers, bilingual EN/FA, LAN or internet",
+  "private": true,
+  "main": "server/index.js",
+  "scripts": {
+    "start": "node server/index.js",
+    "dev": "node --watch server/index.js",
+    "postinstall": "node scripts/copy-vendor.js || true",
+    "build:static": "node scripts/build-static.js",
+    "test": "node --test"
+  },
+  "engines": {
+    "node": ">=18"
+  },
+  "license": "MIT",
+  "dependencies": {
+    "express": "^5.3.0",
+    "qrcode": "^1.5.4",
+    "ws": "^8.22.0"
+  },
+  "devDependencies": {
+    "@fontsource/vazirmatn": "^5.3.0",
+    "gsap": "^3.15.0"
+  }
+}

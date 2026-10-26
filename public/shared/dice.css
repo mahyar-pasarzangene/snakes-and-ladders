@@ -1,0 +1,25 @@
+/* Shared dice widget (TV + mobile). Transform-only animation (spec §2.2). */
+.dice {
+  --dice-size: 84px;
+  width: var(--dice-size);
+  height: var(--dice-size);
+  background: linear-gradient(145deg, #ffffff, #e8e4f5);
+  border-radius: 18%;
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  grid-template-rows: repeat(3, 1fr);
+  padding: 12%;
+  box-sizing: border-box;
+  box-shadow: 0 10px 24px rgba(0, 0, 0, 0.35), inset 0 0 0 2px rgba(26, 16, 51, 0.08);
+  will-change: transform;
+}
+.dice .pip {
+  width: 78%;
+  height: 78%;
+  margin: auto;
+  border-radius: 50%;
+  background: radial-gradient(circle at 35% 35%, #4a3a75, #1a1033);
+  opacity: 0;
+}
+.dice .pip.on { opacity: 1; }
+.dice.face-1 .pip { background: radial-gradient(circle at 35% 35%, #ff7b72, #d92c1e); }

@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html lang="en" dir="ltr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Snakes &amp; Ladders — TV</title>
+<link rel="stylesheet" href="/fonts/fonts.css">
+<link rel="stylesheet" href="/assets/dice.css">
+<link rel="stylesheet" href="/tv/tv.css">
+</head>
+<body>
+<div class="bg-blobs" aria-hidden="true"><span></span><span></span><span></span></div>
+
+<header class="topbar">
+  <div class="brand">
+    <span class="brand-icon" aria-hidden="true">🎲</span>
+    <div>
+      <h1 data-i18n="app.title">Snakes &amp; Ladders</h1>
+      <p data-i18n="app.subtitle">TV Party Game</p>
+    </div>
+  </div>
+  <div class="toolbar" role="toolbar">
+    <div class="ctl">
+      <span class="ctl-label" data-i18n="tv.language">Language</span>
+      <div class="seg" id="langSeg">
+        <button type="button" data-focus data-lang="en">EN</button>
+        <button type="button" data-focus data-lang="fa">فارسی</button>
+      </div>
+    </div>
+    <div class="ctl">
+      <span class="ctl-label" data-i18n="tv.sound">Sound</span>
+      <button type="button" class="pill-btn" data-focus id="soundBtn">🔊</button>
+    </div>
+    <div class="ctl">
+      <span class="ctl-label" data-i18n="tv.lowEffects">Low effects</span>
+      <button type="button" class="pill-btn" data-focus id="fxBtn"></button>
+    </div>
+  </div>
+</header>
+
+<main class="layout">
+  <!-- Board (never mirrored: dir=ltr island, spec §4.1) -->
+  <section class="board-wrap" dir="ltr">
+    <div class="board" id="board">
+      <div class="cells" id="cells"></div>
+      <svg class="features" id="features" viewBox="0 0 1000 1000" preserveAspectRatio="none" aria-hidden="true"></svg>
+      <div class="tokens" id="tokens"></div>
+    </div>
+    <div class="pen" id="pen" aria-hidden="true"></div>
+  </section>
+
+  <aside class="panel">
+    <!-- Lobby card -->
+    <div class="card" id="lobbyCard">
+      <div id="createBox">
+        <button type="button" class="cta" data-focus id="createBtn" data-i18n="tv.createGame">Create game</button>
+        <p class="hint" data-i18n="tv.rulesHint"></p>
+      </div>
+      <div id="joinBox" hidden>
+        <h2 data-i18n="tv.scanToJoin">Scan to join</h2>
+        <div class="qr" id="qrBox" dir="ltr"></div>
+        <p class="join-url" dir="ltr"><span data-i18n="tv.orVisit"></span> <strong id="joinUrl"></strong></p>
+        <p class="room-code"><span data-i18n="tv.roomCode"></span>: <strong dir="ltr" id="roomCode"></strong></p>
+        <button type="button" class="cta" data-focus id="startBtn" data-i18n="tv.startGame">Start game</button>
+        <p class="hint" id="lobbyHint"></p>
+      </div>
+    </div>
+
+    <!-- Turn / dice card -->
+    <div class="card" id="turnCard" hidden>
+      <div class="turn-line"><span class="turn-avatar" id="turnAvatar"></span><h2 id="turnTitle"></h2></div>
+      <div class="dice-row">
+        <div id="diceEl"></div>
+        <div class="timer-box">
+          <div class="timer-num" id="timerNum"></div>
+          <div class="timer-bar"><div class="timer-fill" id="timerFill"></div></div>
+        </div>
+      </div>
+      <p class="action-line" id="actionLine"></p>
+    </div>
+
+    <!-- Players -->
+    <div class="card grow">
+      <h2 class="card-title"><span id="playersTitle">Players</span></h2>
+      <ul class="players" id="players"></ul>
+    </div>
+  </aside>
+</main>
+
+<!-- Winner overlay -->
+<div class="overlay" id="winnerOverlay" hidden>
+  <div class="overlay-card">
+    <div class="winner-avatar" id="winnerAvatar"></div>
+    <h2 data-i18n="tv.winnerTitle">We have a winner!</h2>
+    <p class="winner-name" id="winnerName" dir="auto"></p>
+    <button type="button" class="cta" data-focus id="rematchBtn" data-i18n="tv.rematch">Play again</button>
+  </div>
+</div>
+
+<div class="toasts" id="toasts" aria-live="polite"></div>
+<div class="confetti" id="confetti" dir="ltr" aria-hidden="true"></div>
+
+<script src="/config.js"></script>
+<script src="/shared/protocol.js"></script>
+<script src="/vendor/gsap.min.js"></script>
+<script src="/assets/i18n.js"></script>
+<script src="/assets/ws-client.js"></script>
+<script src="/assets/sound.js"></script>
+<script src="/assets/dice.js"></script>
+<script src="/tv/tv.js"></script>
+</body>
+</html>
