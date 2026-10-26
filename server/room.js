@@ -85,6 +85,14 @@ class Room {
     this.turnTimer = null;            // 30s timeout handle
     this.animTimer = null;            // post-roll animation budget handle
     this.turnEndsAt = null;           // epoch ms, sent to clients
+    // Last resolved roll {id, playerId, roll}. Sent in EVERY snapshot so a
+    // client that missed the one-shot `dice:rolled` broadcast (phone with
+    // the screen off, reload mid-roll, Wi-Fi blip → reconnect) can still
+    // show the authoritative face instead of a stale one (see
+    // public/shared/dice.js syncSnapshot). `rollSeq` is monotonic per
+    // room and never reset, so stale snapshots can't roll it back.
+    this.rollSeq = 0;
+    this.lastRoll = null;
     this.lastActivityAt = Date.now(); // for idle-room cleanup in index.js
   }
 
@@ -110,6 +118,11 @@ class Room {
       turnEndsAt: this.turnEndsAt,
       serverNow: Date.now(),
       winnerId: this.winnerId,
+      // {id, playerId, roll} — lets a (re)connecting phone restore the die
+      // face; null before the first roll of a game.
+      lastRoll: this.lastRoll
+        ? { id: this.lastRoll.id, playerId: this.lastRoll.playerId, roll: this.lastRoll.roll }
+        : null,
       players: [...this.players.values()].map(p => ({
         id: p.id, name: p.name, colorId: p.colorId, avatar: p.avatar,
         position: p.position, misses: p.misses,
@@ -218,6 +231,7 @@ class Room {
     }
     this.turnIndex = 0;
     this.winnerId = null;
+    this.lastRoll = null;           // fresh game: no face from the last one
     this.phase = SL.Phase.IN_PROGRESS;
     this.announce('announce.gameStarted', {});
     this.broadcastState();
@@ -296,12 +310,16 @@ class Room {
 
     const roll = rollDie(this.rng);
     const plan = resolveRoll(this.board, p.position, roll);
+    const rollId = ++this.rollSeq;
+    this.lastRoll = { id: rollId, playerId: p.id, roll };
     p.position = plan.finalPosition;
     this.touch();
 
     // The whole room animates from this one plan — dice result included,
     // so TV and phone reveals are synchronized, not independently random.
-    this.broadcast(SL.S2C.DICE_ROLLED, { playerId: p.id, plan, serverNow: Date.now() });
+    this.broadcast(SL.S2C.DICE_ROLLED, {
+      rollId, playerId: p.id, plan, serverNow: Date.now(),
+    });
     if (plan.entered) this.announce('announce.enteredBoard', { name: p.name });
     else if (p.position === 0 && !plan.overshot) this.announce('announce.needSix', { name: p.name });
     if (plan.overshot) this.announce('announce.overshoot', { name: p.name, roll });
@@ -339,6 +357,7 @@ class Room {
     this.board = null;
     this.order = [];
     this.winnerId = null;
+    this.lastRoll = null;
     // Removed players keep their seat out of the next game unless they
     // rejoin fresh; drop them, reset everyone else.
     for (const [id, p] of this.players) {

@@ -56,18 +56,32 @@ app.get('/config.js', (_req, res) => {
 
 if (config.serveStatic) {
   const pub = (p) => path.join(ROOT, 'public', p);
-  const cache = { maxAge: '1h', immutable: false };
-  app.use('/shared', express.static(path.join(ROOT, 'shared'), cache));
-  app.use('/locales', express.static(path.join(ROOT, 'locales'), cache));
-  app.use('/vendor', express.static(pub('vendor'), { maxAge: '7d' }));
-  app.use('/fonts', express.static(pub('fonts'), { maxAge: '7d' }));
-  app.use('/assets', express.static(pub('shared'), cache)); // css/js shared by clients
-  app.use('/tv', express.static(pub('tv'), cache));
-  app.use('/m', express.static(pub('mobile'), cache));
+  // Client code and markup must revalidate on every load. Phones keep the
+  // page open for a whole party, and the old `maxAge: '1h'` meant a fixed
+  // dice.js/mobile.js could go unseen by already-connected players (only
+  // the TV, which gets refreshed, picked up a deploy). 'no-cache' still
+  // allows a cached copy, but forces an ETag/304 revalidation — cheap on
+  // a LAN and correct on every reload. Binary assets (fonts, GSAP) stay
+  // long-cached: they don't carry game logic.
+  const clientCache = {
+    etag: true, lastModified: true,
+    setHeaders: (res) => res.setHeader('Cache-Control', 'no-cache'),
+  };
+  const assetCache = { maxAge: '7d' };
+  app.use('/shared', express.static(path.join(ROOT, 'shared'), clientCache));
+  app.use('/locales', express.static(path.join(ROOT, 'locales'), clientCache));
+  app.use('/vendor', express.static(pub('vendor'), assetCache));
+  app.use('/fonts', express.static(pub('fonts'), assetCache));
+  app.use('/assets', express.static(pub('shared'), clientCache)); // css/js shared by clients
+  app.use('/tv', express.static(pub('tv'), clientCache));
+  app.use('/m', express.static(pub('mobile'), clientCache));
 
   // TV is the landing page; phones land on /join/<CODE> from the QR code.
-  app.get('/', (_req, res) => res.sendFile(pub('tv/index.html')));
-  app.get('/join/:code', (_req, res) => res.sendFile(pub('mobile/index.html')));
+  // sendFile's default `max-age=0` still lets a phone reuse a stale page
+  // without asking; mark both shells as revalidate-always like the assets.
+  const page = { headers: { 'Cache-Control': 'no-cache' } };
+  app.get('/', (_req, res) => res.sendFile(pub('tv/index.html'), page));
+  app.get('/join/:code', (_req, res) => res.sendFile(pub('mobile/index.html'), page));
 }
 
 const server = http.createServer(app);

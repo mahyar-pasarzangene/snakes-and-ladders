@@ -300,11 +300,11 @@
   }
 
   // ── move animation: one GSAP timeline per roll (spec §2.2) ─────────
-  function animatePlan(playerId, plan) {
+  function animatePlan(playerId, plan, rollId) {
     var player = null;
     state.players.forEach(function (p) { if (p.id === playerId) player = p; });
     var el = tokenEls[playerId];
-    dice.rollTo(plan.roll, CFG.DICE_ANIM_MS);
+    dice.rollTo(plan.roll, CFG.DICE_ANIM_MS, null, rollId);
     Sound.dice();
     if (player) $('actionLine').textContent = I18n.t('tv.rolledInfo', { name: player.name, roll: plan.roll });
     if (!el || !window.gsap) { return; }
@@ -546,6 +546,10 @@
   sock.on(SL.S2C.STATE, function (msg) {
     var prevTurn = state && state.turnPlayerId;
     state = msg.state;
+    // Same snapshot-driven face sync as the phones (see mobile.js):
+    // a snapshot that carries a roll this die never animated shows the
+    // authoritative face instead of leaving a stale one on screen.
+    dice.syncSnapshot(state.lastRoll);
     if (state.lang && state.lang !== I18n.lang) {
       I18n.setLang(state.lang, { skipPersist: false }).then(function () { refreshLangSeg(); render(); });
       return;
@@ -556,7 +560,7 @@
   });
   sock.on(SL.S2C.DICE_ROLLED, function (msg) {
     clockOffset = msg.serverNow - Date.now();
-    if (state) animatePlan(msg.playerId, msg.plan);
+    if (state) animatePlan(msg.playerId, msg.plan, msg.rollId);
   });
   sock.on(SL.S2C.TURN, function (msg) {
     if (state) { state.turnPlayerId = msg.turnPlayerId; state.turnEndsAt = msg.turnEndsAt; }

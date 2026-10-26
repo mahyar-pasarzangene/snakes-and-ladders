@@ -21,7 +21,10 @@ Companion to the build spec (v2). Section numbers (§) below refer to the spec.
 - **Authoritative server (§2).** All dice, movement, timers, win checks run
   server-side. Clients render `room:state` snapshots and `dice:rolled`
   *move plans* (result + every square hopped + optional snake/ladder), so
-  TV and phones animate identically and stay in sync.
+  TV and phones animate identically and stay in sync. Every snapshot also
+  carries `lastRoll: {id, playerId, roll}` — the face is part of the state,
+  not only of the one-shot broadcast, so a phone that missed a roll can
+  still show exactly what the TV shows (see D12).
 - **State machine:** `LOBBY → IN_PROGRESS (AWAITING_ROLL → ANIMATING) →
   GAME_OVER`, plus `GAME_OVER → LOBBY` on rematch. Implemented and heavily
   commented in `server/room.js`; pure rules in `server/game.js`.
@@ -46,6 +49,7 @@ Companion to the build spec (v2). Section numbers (§) below refer to the spec.
 | D9 | **Clock sync via `serverNow`** on state/turn/roll messages | Each client keeps `offset = serverNow − Date.now()` and renders the countdown from the server's `turnEndsAt`. Good to ~RTT accuracy; plenty for a 30 s bar. |
 | D10 | **Fonts: Vazirmatn woff2, weights 400/700/900, arabic+latin subsets** | Bundled locally (no CDN; §2.1/§4.1). `unicode-range` means a session downloads only the subset(s) it renders: ≈21 KB/weight arabic, ≈16 KB latin → ≤64 KB for a pure-FA session, ≤49 KB pure-EN. Total on disk 123 KB (both scripts × 3 weights). |
 | D11 | **Vazirmatn also covers Latin digits**, and fa digits are produced by a manual ۰–۹ map | Manual mapping avoids relying on old-TV `Intl` having Persian numbering (§4.1). |
+| D12 | **The die face is part of the snapshot, not only of `dice:rolled`** | The tumble rides a one-shot broadcast, and phones miss it in normal use (screen lock, backgrounded tab, reload mid-roll, Wi-Fi blip → reconnect). Each room tracks `lastRoll {id, playerId, roll}` with a monotonic per-room id and sends it in every snapshot; `Dice.syncSnapshot()` (public/shared/dice.js) adopts it when the die hasn't already shown/animating that id, and both clients call it on `room:state`/`player:joined`. Duplicate snapshots (the normal `dice:rolled` → `room:state` order) are no-ops, so a running tumble is never cut short. Client JS/CSS/HTML is served `Cache-Control: no-cache` (+ETag) for the same reason: a phone that keeps the page open all evening must not keep running a pre-fix client. |
 
 ## 3. Deployment modes (§2.1) — how each is realized
 

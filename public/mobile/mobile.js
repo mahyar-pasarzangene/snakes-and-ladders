@@ -30,7 +30,7 @@
   var pickedColor = 0;
   var pickedAvatar = CFG.AVATARS[0];
   var rolling = false;
-  var lastRoll = null; // {playerId, roll} — keeps "rolled N" visible during ANIMATING
+  var lastRoll = null; // {id, playerId, roll} — keeps "rolled N" visible during ANIMATING
   var langOverride = null;
   try { langOverride = localStorage.getItem('sl-lang-override'); } catch (e) {}
 
@@ -129,6 +129,31 @@
     var found = null;
     if (state) state.players.forEach(function (p) { if (p.id === id) found = p; });
     return found;
+  }
+
+  /**
+   * Adopt the authoritative die face + result from a room snapshot.
+   *
+   * `dice:rolled` is a one-shot broadcast and phones miss it in normal
+   * use — the screen locks, the tab is backgrounded, the browser drops
+   * the socket (Wi-Fi/cell handoff) and reconnects, or the page reloads
+   * mid-roll. Those players then kept whatever face the die had (or the
+   * default 6) while the TV showed the real result. Every snapshot
+   * carries `lastRoll`, so re-sync here; dice.syncSnapshot() ignores a
+   * roll the die already shows, so the snapshot that always follows
+   * `dice:rolled` cannot cut a running tumble short.
+   */
+  function syncDice(s) {
+    if (!s || !s.lastRoll) return;
+    dice.syncSnapshot(s.lastRoll);
+    // Also restore the "X rolled N" line for a roll we missed while the
+    // room is still animating it, so the phone explains the TV's board.
+    var newer = !lastRoll || !(lastRoll.id >= s.lastRoll.id);
+    if (s.turnPhase === 'ANIMATING' && newer) {
+      lastRoll = {
+        id: s.lastRoll.id, playerId: s.lastRoll.playerId, roll: s.lastRoll.roll,
+      };
+    }
   }
 
   function rolledText(playerId, roll) {
@@ -298,12 +323,14 @@
     me = { id: msg.playerId, token: msg.token };
     saveSession();
     state = msg.state;
+    syncDice(state); // reconnect mid-roll: show the face the TV is showing
     show('game');
     render();
     tryWakeLock();
   });
   sock.on(SL.S2C.STATE, function (msg) {
     state = msg.state;
+    syncDice(state);
     // lobby → game-over cleanup: after a rematch, removed/dropped
     // players vanish from the roster — send them back to the join form.
     if (me.id && !myRecord()) {
@@ -327,8 +354,8 @@
   sock.on(SL.S2C.DICE_ROLLED, function (msg) {
     clockOffset = msg.serverNow - Date.now();
     rolling = false;
-    lastRoll = { playerId: msg.playerId, roll: msg.plan.roll };
-    dice.rollTo(msg.plan.roll, CFG.DICE_ANIM_MS);
+    lastRoll = { id: msg.rollId, playerId: msg.playerId, roll: msg.plan.roll };
+    dice.rollTo(msg.plan.roll, CFG.DICE_ANIM_MS, null, msg.rollId);
     Sound.dice();
     $('statusLine').textContent = rolledText(msg.playerId, msg.plan.roll);
   });
