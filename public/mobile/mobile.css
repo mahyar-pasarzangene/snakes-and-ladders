@@ -1,0 +1,130 @@
+/* Mobile controller styles — logical properties throughout so RTL flips
+   cleanly; big touch targets; transform/opacity motion only. */
+:root {
+  --bg: #160a2e;
+  --card: rgba(255, 255, 255, 0.08);
+  --border: rgba(255, 255, 255, 0.16);
+  --text: #f5f2ff;
+  --muted: #b9aee0;
+  --accent: #ffb020;
+}
+* { box-sizing: border-box; }
+body {
+  margin: 0;
+  font-family: 'Vazirmatn', 'Segoe UI', Tahoma, Arial, sans-serif;
+  background: radial-gradient(700px 500px at 15% -10%, #3b1d7a 0%, var(--bg) 60%),
+              radial-gradient(600px 500px at 110% 110%, #5b1445 0%, var(--bg) 60%);
+  color: var(--text);
+  min-height: 100dvh;
+  padding: env(safe-area-inset-top) 0 env(safe-area-inset-bottom);
+}
+[hidden] { display: none !important; }
+
+.m-top {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 12px 16px;
+}
+.m-brand { font-weight: 900; font-size: 1.05rem; }
+.m-tools { display: flex; align-items: center; gap: 8px; }
+.conn { width: 10px; height: 10px; border-radius: 50%; background: #ef4444; flex: none; }
+.conn.on { background: #22c55e; }
+.seg { display: flex; background: var(--card); border: 1px solid var(--border); border-radius: 999px; overflow: hidden; }
+.seg button { font: inherit; color: var(--text); background: transparent; border: 0; padding: 6px 12px; font-size: 0.9rem; }
+.seg button.active { background: var(--accent); color: #241300; font-weight: 700; }
+.icon-btn { font-size: 1.1rem; background: var(--card); border: 1px solid var(--border); border-radius: 999px; width: 38px; height: 38px; }
+
+.view { padding: 8px 20px 32px; max-width: 560px; margin: 0 auto; }
+.view h1 { font-size: 1.7rem; font-weight: 900; margin: 10px 0 4px; }
+.room-line { color: var(--accent); font-weight: 700; margin: 0 0 14px; }
+
+.field { display: block; margin-bottom: 18px; }
+.field > span { display: block; color: var(--muted); font-size: 0.9rem; margin-bottom: 8px; }
+.field input {
+  width: 100%; font: inherit; font-size: 1.15rem; color: var(--text);
+  background: var(--card); border: 1px solid var(--border); border-radius: 14px;
+  padding: 13px 15px;
+}
+.field input::placeholder { color: var(--muted); }
+
+.swatches { display: flex; flex-wrap: wrap; gap: 10px; }
+.swatch {
+  width: 46px; height: 46px; border-radius: 50%; border: 3px solid transparent;
+  display: flex; align-items: center; justify-content: center; font-size: 1.45rem;
+  background: var(--card); cursor: pointer; padding: 0;
+}
+.swatch.color { background: var(--c); }
+.swatch.sel { border-color: #fff; transform: scale(1.1); }
+
+.cta {
+  font: inherit; font-weight: 900; color: #241300; border: 0; cursor: pointer;
+  background: linear-gradient(135deg, var(--accent), #ff8a3d);
+  border-radius: 999px; padding: 14px 30px; font-size: 1.1rem; width: 100%;
+  box-shadow: 0 10px 24px rgba(255, 150, 40, 0.35);
+}
+.cta:disabled { opacity: 0.5; }
+.err { color: #ff9d9d; min-height: 1.4em; text-align: center; }
+
+.me-chip {
+  display: flex; align-items: center; gap: 10px;
+  background: var(--card); border: 1px solid var(--border); border-radius: 999px;
+  padding: 6px 14px 6px 6px;
+  padding-inline: 6px 14px;
+}
+.me-avatar {
+  width: 42px; height: 42px; border-radius: 50%; background: #fff;
+  border: 3px solid var(--pc, #888);
+  display: flex; align-items: center; justify-content: center; font-size: 1.3rem; flex: none;
+}
+.me-name { font-weight: 800; unicode-bidi: isolate; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.me-pos { margin-inline-start: auto; color: var(--accent); font-weight: 900; white-space: nowrap; }
+
+.status-line { text-align: center; font-size: 1.15rem; font-weight: 700; min-height: 1.6em; margin: 18px 0 8px; }
+.timer-bar { height: 8px; background: rgba(255,255,255,0.15); border-radius: 999px; overflow: hidden; margin-bottom: 10px; }
+.timer-fill { height: 100%; width: 100%; background: var(--accent); transform-origin: left center; }
+[dir="rtl"] .timer-fill { transform-origin: right center; }
+.timer-fill.urgent { background: #ef4444; }
+
+.dice-stage { display: flex; justify-content: center; padding: 14px 0 20px; }
+#diceEl .dice { --dice-size: 104px; }
+
+.roll-btn {
+  font: inherit; font-weight: 900; font-size: 1.6rem; letter-spacing: 0.04em;
+  width: 100%; padding: 20px; border: 0; border-radius: 22px; cursor: pointer;
+  color: #241300; background: linear-gradient(135deg, var(--accent), #ff8a3d);
+  box-shadow: 0 14px 30px rgba(255, 150, 40, 0.4);
+  transition: opacity 0.2s;
+}
+.roll-btn:disabled { opacity: 0.25; box-shadow: none; }
+.roll-btn.pulse { animation: rollpulse 0.8s ease-in-out infinite alternate; }
+@keyframes rollpulse { from { transform: scale(1); } to { transform: scale(1.035); } }
+
+.watch-hint { text-align: center; color: var(--muted); margin-top: 12px; }
+.standings-title { font-size: 1rem; color: var(--muted); margin: 26px 0 8px; font-weight: 700; }
+.standings { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 8px; }
+.standings li {
+  display: flex; align-items: center; gap: 10px;
+  background: var(--card); border: 1px solid transparent; border-radius: 14px; padding: 8px 12px;
+}
+.standings li.active { border-color: var(--accent); }
+.standings li.offline { opacity: 0.5; }
+.standings .s-av { font-size: 1.2rem; }
+.standings .s-name { font-weight: 700; unicode-bidi: isolate; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 38%; }
+.standings .s-bar { flex: 1; height: 8px; background: rgba(255,255,255,0.12); border-radius: 99px; overflow: hidden; }
+.standings .s-fill { height: 100%; background: var(--pc, #888); transform-origin: left center; }
+[dir="rtl"] .standings .s-fill { transform-origin: right center; }
+.standings .s-pos { font-weight: 900; color: var(--accent); min-width: 2.2em; text-align: end; }
+
+.end-emoji { font-size: 4.5rem; text-align: center; margin-top: 6vh; }
+#endView h1 { text-align: center; }
+
+.toasts {
+  position: fixed; bottom: calc(16px + env(safe-area-inset-bottom)); left: 50%;
+  transform: translateX(-50%);
+  display: flex; flex-direction: column; gap: 8px; align-items: center; z-index: 50; width: 92vw;
+  pointer-events: none;
+}
+.toast {
+  background: rgba(20, 10, 45, 0.94); border: 1px solid var(--border);
+  padding: 10px 18px; border-radius: 999px; font-weight: 700; text-align: center;
+  max-width: 100%;
+}

@@ -1,0 +1,20 @@
+# Fly.io — Mode C. Deploy: fly launch --copy-config (then fly deploy).
+# NOTE: Fly.io has NO free tier for new accounts (card required); a
+# shared-cpu-1x 256MB machine costs only ~$2/mo and auto-stop keeps idle
+# cost near zero, with ~1-2s wake. See README hosting table.
+app = "snakes-and-ladders-party"
+primary_region = "fra"
+
+[build]
+  dockerfile = "Dockerfile"
+
+[http_service]
+  internal_port = 3000
+  force_https = true
+  auto_stop_machines = "stop"
+  auto_start_machines = true
+  min_machines_running = 0
+
+[[vm]]
+  size = "shared-cpu-1x"
+  memory = "256mb"

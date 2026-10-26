@@ -1,0 +1,12 @@
+# Netlify hosts the STATIC FRONTEND ONLY (Mode B). Netlify cannot run the
+# long-lived WebSocket server — deploy server/ to Render/Fly/etc. and build
+# with:  WS_URL=wss://<your-backend> npm run build:static
+[build]
+  command = "npm run build:static"
+  publish = "dist-static"
+
+# /join/<CODE> must serve the mobile client.
+[[redirects]]
+  from = "/join/*"
+  to = "/join/index.html"
+  status = 200

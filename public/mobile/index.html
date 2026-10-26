@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="en" dir="ltr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#160a2e">
+<title>Snakes &amp; Ladders — Join</title>
+<link rel="stylesheet" href="/fonts/fonts.css">
+<link rel="stylesheet" href="/assets/dice.css">
+<link rel="stylesheet" href="/m/mobile.css">
+</head>
+<body>
+<header class="m-top">
+  <div class="m-brand">🎲 <span data-i18n="app.title">Snakes &amp; Ladders</span></div>
+  <div class="m-tools">
+    <span class="conn" id="connDot" title=""></span>
+    <div class="seg small" id="langSeg">
+      <button type="button" data-lang="en">EN</button>
+      <button type="button" data-lang="fa">فارسی</button>
+    </div>
+    <button type="button" class="icon-btn" id="soundBtn">🔊</button>
+  </div>
+</header>
+
+<!-- JOIN -->
+<section id="joinView" class="view">
+  <h1 data-i18n="join.title">Join the game</h1>
+  <p class="room-line" id="roomLine"></p>
+  <label class="field" id="codeField" hidden>
+    <span data-i18n="tv.roomCode">Room code</span>
+    <input id="codeInput" dir="ltr" maxlength="5" autocomplete="off" autocapitalize="characters">
+  </label>
+  <label class="field">
+    <span data-i18n="join.nameLabel">Your name</span>
+    <input id="nameInput" dir="auto" maxlength="16" data-i18n-ph="join.namePlaceholder" autocomplete="name">
+  </label>
+  <div class="field">
+    <span data-i18n="join.colorLabel">Pick your color</span>
+    <div class="swatches" id="colorSwatches"></div>
+  </div>
+  <div class="field">
+    <span data-i18n="join.avatarLabel">Pick your character</span>
+    <div class="swatches avatars" id="avatarSwatches"></div>
+  </div>
+  <button type="button" class="cta big" id="joinBtn" data-i18n="join.button">Join game</button>
+  <p class="err" id="joinError"></p>
+</section>
+
+<!-- GAME -->
+<section id="gameView" class="view" hidden>
+  <div class="me-chip" id="meChip">
+    <span class="me-avatar" id="meAvatar"></span>
+    <span class="me-name" id="meName" dir="auto"></span>
+    <span class="me-pos" id="mePos"></span>
+  </div>
+
+  <p class="status-line" id="statusLine"></p>
+  <div class="timer-bar" id="timerBar" hidden><div class="timer-fill" id="timerFill"></div></div>
+
+  <div class="dice-stage">
+    <div id="diceEl"></div>
+  </div>
+
+  <button type="button" class="roll-btn" id="rollBtn" data-i18n="play.roll">ROLL</button>
+  <p class="watch-hint" data-i18n="play.watchTv"></p>
+
+  <h2 class="standings-title" id="standingsTitle"></h2>
+  <ul class="standings" id="standings"></ul>
+</section>
+
+<!-- GAME OVER / REMOVED -->
+<section id="endView" class="view" hidden>
+  <div class="end-emoji" id="endEmoji">🏆</div>
+  <h1 id="endTitle"></h1>
+  <p class="status-line" id="endLine"></p>
+</section>
+
+<div class="toasts" id="toasts" aria-live="polite"></div>
+
+<script src="/config.js"></script>
+<script src="/shared/protocol.js"></script>
+<script src="/vendor/gsap.min.js"></script>
+<script src="/assets/i18n.js"></script>
+<script src="/assets/ws-client.js"></script>
+<script src="/assets/sound.js"></script>
+<script src="/assets/dice.js"></script>
+<script src="/m/mobile.js"></script>
+</body>
+</html>

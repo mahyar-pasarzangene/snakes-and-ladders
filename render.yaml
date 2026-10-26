@@ -1,0 +1,17 @@
+# Render blueprint — Mode C (single host: static + WebSocket in one service).
+# Free plan spins down after ~15 min idle (~1 min cold start); any live game
+# keeps it awake because clients ping every 20s. See README hosting table.
+services:
+  - type: web
+    name: snakes-and-ladders
+    runtime: node
+    plan: free
+    buildCommand: npm ci
+    startCommand: npm start
+    healthCheckPath: /healthz
+    envVars:
+      # Set to your Render URL after first deploy so QR codes are exact:
+      # - key: PUBLIC_BASE_URL
+      #   value: https://snakes-and-ladders.onrender.com
+      - key: SERVE_STATIC
+        value: "true"
