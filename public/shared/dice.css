@@ -12,7 +12,13 @@
   display: grid;
   grid-template-columns: repeat(3, 1fr);
   grid-template-rows: repeat(3, 1fr);
-  padding: 12%;
+  /* Percentage padding is resolved against the FLEX PARENT's width, not
+     the die's own --dice-size. On the phone stage (and wide TV cards) that
+     swallowed the 3×3 grid, leaving the pips tiny or zero-sized. Base the
+     inset on the die itself so the pip grid is identical on both views.
+     The px declaration is a fallback for engines without calc(). */
+  padding: 12px;
+  padding: calc(var(--dice-size) * 0.12);
   box-sizing: border-box;
   box-shadow: 0 10px 24px rgba(0, 0, 0, 0.35), inset 0 0 0 2px rgba(26, 16, 51, 0.08);
   will-change: transform;
