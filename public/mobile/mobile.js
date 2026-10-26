@@ -30,6 +30,7 @@
   var pickedColor = 0;
   var pickedAvatar = CFG.AVATARS[0];
   var rolling = false;
+  var lastRoll = null; // {playerId, roll} — keeps "rolled N" visible during ANIMATING
   var langOverride = null;
   try { langOverride = localStorage.getItem('sl-lang-override'); } catch (e) {}
 
@@ -130,6 +131,13 @@
     return found;
   }
 
+  function rolledText(playerId, roll) {
+    var p = playerById(playerId);
+    return playerId === me.id
+      ? I18n.t('play.youRolled', { roll: roll })
+      : I18n.t('play.rolledInfo', { name: p ? p.name : '', roll: roll });
+  }
+
   function render() {
     if (!state || !me.id) return;
     var mine = myRecord();
@@ -176,6 +184,11 @@
 
     if (state.phase === 'LOBBY') {
       $('statusLine').textContent = I18n.t('play.waitingStart');
+    } else if (state.turnPhase === 'ANIMATING' && lastRoll) {
+      // The server sends room:state right after dice:rolled; without this
+      // branch that snapshot re-render instantly overwrote the "rolled N"
+      // line with "X is playing…", so the result was never readable here.
+      $('statusLine').textContent = rolledText(lastRoll.playerId, lastRoll.roll);
     } else if (isMyTurn) {
       $('statusLine').textContent = mine.position === 0
         ? I18n.t('play.offBoardHint')
@@ -304,6 +317,7 @@
     clockOffset = msg.serverNow - Date.now();
     if (state) { state.turnPlayerId = msg.turnPlayerId; state.turnEndsAt = msg.turnEndsAt; }
     rolling = false;
+    lastRoll = null; // new roll window: status returns to turn prompts
     if (msg.turnPlayerId === me.id) {
       Sound.turn();
       if (navigator.vibrate) navigator.vibrate([120, 60, 120]);
@@ -313,12 +327,10 @@
   sock.on(SL.S2C.DICE_ROLLED, function (msg) {
     clockOffset = msg.serverNow - Date.now();
     rolling = false;
+    lastRoll = { playerId: msg.playerId, roll: msg.plan.roll };
     dice.rollTo(msg.plan.roll, CFG.DICE_ANIM_MS);
     Sound.dice();
-    var p = playerById(msg.playerId);
-    $('statusLine').textContent = msg.playerId === me.id
-      ? I18n.t('play.youRolled', { roll: msg.plan.roll })
-      : I18n.t('play.rolledInfo', { name: p ? p.name : '', roll: msg.plan.roll });
+    $('statusLine').textContent = rolledText(msg.playerId, msg.plan.roll);
   });
   sock.on(SL.S2C.LANG, function (msg) {
     if (!langOverride) I18n.setLang(msg.lang, { skipPersist: true }).then(function () {

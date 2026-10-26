@@ -85,7 +85,9 @@ body {
 .timer-fill.urgent { background: #ef4444; }
 
 .dice-stage { display: flex; justify-content: center; padding: 14px 0 20px; }
-#diceEl .dice { --dice-size: 104px; }
+/* Compound selector: dice.js puts .dice on #diceEl itself (the old
+   descendant selector never matched, leaving the 84px fallback). */
+#diceEl.dice { --dice-size: 104px; }
 
 .roll-btn {
   font: inherit; font-weight: 900; font-size: 1.6rem; letter-spacing: 0.04em;

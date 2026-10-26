@@ -35,16 +35,22 @@
   Dice.prototype.setFace = function (n) {
     this.face = n;
     this.el.className = 'dice face-' + n;
+    this.el.setAttribute('data-face', n);
     var on = PIPS[n] || [];
     for (var i = 0; i < 9; i++) {
       this.pips[i].className = 'pip' + (on.indexOf(i) !== -1 ? ' on' : '');
     }
   };
 
-  /** Animate a tumble ending on `result`. Calls done() when settled. */
+  /** Animate a tumble ending on `result`. Calls done() when settled.
+   *  The rocking tween runs until the face settles, then is killed and
+   *  the die is explicitly returned to rotation:0 / scale:1 — an earlier
+   *  yoyo tween used to end on its FROM values, leaving every settled
+   *  die permanently tilted at -14°. */
   Dice.prototype.rollTo = function (result, durationMs, done) {
     var self = this;
     clearInterval(this._iv);
+    this.stopRock();
     var swaps = Math.max(4, Math.floor(durationMs / 90));
     var count = 0;
     this._iv = setInterval(function () {
@@ -53,23 +59,34 @@
       if (count >= swaps) {
         clearInterval(self._iv);
         self.setFace(result);
+        self.stopRock();
         if (window.gsap) {
-          gsap.fromTo(self.el, { scale: 1.25 }, { scale: 1, duration: 0.25, ease: 'back.out(2)' });
+          gsap.fromTo(self.el, { scale: 1.18 }, {
+            rotation: 0, scale: 1, duration: 0.3, ease: 'back.out(2)', overwrite: 'auto',
+          });
         }
         if (done) done();
       }
     }, 90);
 
     if (window.gsap) {
-      gsap.fromTo(self.el,
-        { rotation: -14, scale: 0.9 },
-        { rotation: 12, scale: 1.12, duration: durationMs / 2000, yoyo: true, repeat: 1, ease: 'sine.inOut' });
+      this._rock = gsap.fromTo(self.el,
+        { rotation: -12, scale: 0.92 },
+        { rotation: 10, scale: 1.08, duration: 0.18, yoyo: true, repeat: -1, ease: 'sine.inOut' });
     }
+  };
+
+  Dice.prototype.stopRock = function () {
+    if (this._rock) { this._rock.kill(); this._rock = null; }
   };
 
   Dice.prototype.stop = function () {
     clearInterval(this._iv);
-    if (window.gsap) gsap.killTweensOf(this.el);
+    this.stopRock();
+    if (window.gsap) {
+      gsap.killTweensOf(this.el);
+      gsap.set(this.el, { rotation: 0, scale: 1 });
+    }
   };
 
   window.Dice = Dice;
